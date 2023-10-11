@@ -1,0 +1,19 @@
+[package]
+name = "query-params-macro"
+version = "0.0.2"
+edition = "2021"
+authors = ["Brendan Blanchard"]
+description = "A procedural macro for easy use of arbitrary structs as query parameters in Hyper"
+license = "MIT"
+repository = "https://github.com/Brendan-Blanchard/to-query-params"
+keywords = ["hyper", "query", "params", "web", "http"]
+categories = ["patterns", "web-programming", "network-programming"]
+exclude = [".idea", ".gitignore", ".github"]
+
+[lib]
+proc-macro = true
+
+[dependencies]
+proc-macro2 = "1.0.56"
+quote = "1.0.27"
+syn = { version = "2.0.15", features = ["full"] }
