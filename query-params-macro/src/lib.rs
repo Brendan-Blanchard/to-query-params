@@ -26,6 +26,41 @@ struct FieldDescription {
 /// any structs with values supporting `.to_string`. Optional values are only included if present,
 /// and fields marked `#[query(required)]` must be non-optional. Renaming of fields is also available,
 /// using `#[query(rename = "other_name")]` on the field.
+///
+/// # Example: Query Params
+/// QueryParams supports both required and optional fields, which won't be included in the output
+/// if their value is None.
+///
+/// ```
+/// # use query_params_macro::QueryParams;
+///
+/// # pub trait ToQueryParams { // trait defined here again since it can be provided by macro crate
+/// #    fn to_query_params(&self) -> Vec<(&'static str, String)>;
+/// # }
+///
+/// // Eq and PartialEq are just for assertions
+/// #[derive(QueryParams, Debug, PartialEq, Eq)]
+/// struct ProductRequest {
+///     #[query(required)]
+///     id: i32,
+///     min_price: Option<i32>,
+///     max_price: Option<i32>,
+/// }
+///
+/// pub fn main() {
+///     let request = ProductRequest {
+///         id: 999, // will be included in output
+///         min_price: None, // will *not* be included in output
+///         max_price: Some(100), // will be included in output
+///     };
+///
+///     let expected = vec![("id", "999".into()), ("max_price", "100".into())];
+///     
+///     let query_params = request.to_query_params();
+///
+///     assert_eq!(expected, query_params);
+/// }
+/// ```
 #[proc_macro_derive(QueryParams, attributes(query))]
 pub fn derive(input: TokenStream) -> TokenStream {
     let ast: DeriveInput = parse_macro_input!(input);

@@ -17,6 +17,14 @@ mod tests {
     }
 
     #[derive(QueryParams, Debug, PartialEq)]
+    struct TestItemRequiredRename {
+        #[query(required, rename = "alpha")]
+        a: i32,
+        #[query(required)]
+        b: i32,
+    }
+
+    #[derive(QueryParams, Debug, PartialEq)]
     struct TestItemOptionals {
         a: Option<String>,
         b: Option<bool>,
@@ -53,6 +61,15 @@ mod tests {
         let test_item = TestItem { a: 0, b: 1 };
 
         let expected = vec![("a", "0".to_string()), ("b", "1".to_string())];
+
+        assert_eq!(test_item.to_query_params(), expected);
+    }
+
+    #[test]
+    fn test_required_rename_case() {
+        let test_item = TestItemRequiredRename { a: 0, b: 1 };
+
+        let expected = vec![("alpha", "0".to_string()), ("b", "1".to_string())];
 
         assert_eq!(test_item.to_query_params(), expected);
     }
