@@ -14,18 +14,19 @@ use syn::{parse_macro_input, Attribute, DeriveInput, Field, Fields, Ident, LitSt
 #[derive(Debug, Eq, PartialEq, Hash)]
 enum FieldAttributes {
     Required,
+    Excluded,
     Rename(String),
 }
 
-#[derive(Debug)]
-struct FieldDescription {
+struct FieldDescription<'f> {
+    pub field: &'f Field,
     pub field_name: String,
     pub ident: Ident,
     pub attributes: HashSet<FieldAttributes>,
 }
 
 /// [`QueryParams`] derives `fn to_query_params(&self) -> Vec<(String, String)>` for
-/// any structs with values supporting `.to_string`.
+/// any struct with field values supporting `.to_string()`.
 ///
 /// Optional values are only included if present,
 /// and fields marked `#[query(required)]` must be non-optional. Renaming of fields is also available,
@@ -59,7 +60,10 @@ struct FieldDescription {
 ///         max_price: Some(100), // will be included in output
 ///     };
 ///
-///     let expected = vec![("id", "999".into()), ("max_price", "100".into())];
+///     let expected = vec![
+///         ("id".into(), "999".into()),
+///         ("max_price".into(), "100".into())
+///     ];
 ///     
 ///     let query_params = request.to_query_params();
 ///
@@ -74,8 +78,9 @@ struct FieldDescription {
 /// and will always appear in the resulting `Vec`
 /// - rename -- marks a field to be renamed when it's output in the resulting Vec.
 /// E.g. `#[query(rename = "newName")]`
+/// - exclude -- marks a field to never be included in output params, regardless of value
 ///
-/// # Example: Renaming
+/// # Example: Renaming and Excluding
 /// In some cases, names of query parameters are not valid identifiers, or don't adhere to Rust's
 /// default style of "snake_case". Parameters named `type` is a common invalid identifier in many APIs.
 /// [`QueryParams`] can rename individual fields when creating the query parameters Vec if the
@@ -83,10 +88,12 @@ struct FieldDescription {
 ///
 /// In the below example, an API expects a type of product and a max price, given as
 /// `type=something&maxPrice=123`, which would be and invalid identifier and a non-Rust style
-/// field name respectively.
+/// field name respectively. A field containing local data that won't be included in the query
+/// is also tagged as `#[query(exclude)]` to exclude it.
 ///
 /// ```
 /// # use query_params_macro::QueryParams;
+/// # use urlencoding;
 /// # // trait defined here again since it can't be provided by macro crate
 /// # pub trait ToQueryParams {
 /// #    fn to_query_params(&self) -> Vec<(String, String)>;
@@ -100,6 +107,8 @@ struct FieldDescription {
 ///     product_type: Option<String>,
 ///     #[query(rename = "maxPrice")]
 ///     max_price: Option<i32>,
+///     #[query(exclude)]
+///     private_data: i32,
 /// }
 ///
 /// pub fn main() {
@@ -107,9 +116,14 @@ struct FieldDescription {
 ///         id: 999,
 ///         product_type: Some("accessory".into()),
 ///         max_price: Some(100),
+///         private_data: 42, // will not be part of the output
 ///     };
 ///
-///     let expected = vec![("id", "999".into()), ("type", "accessory".into()), ("maxPrice", "100".into())];
+///     let expected = vec![
+///         ("id".into(), "999".into()),
+///         ("type".into(), "accessory".into()),
+///         ("maxPrice".into(), "100".into())
+///     ];
 ///     
 ///     let query_params = request.to_query_params();
 ///
@@ -132,8 +146,9 @@ pub fn derive(input: TokenStream) -> TokenStream {
         .collect();
 
     let field_descriptions = named_fields
-        .iter()
+        .into_iter()
         .map(map_field_to_description)
+        .filter(|field| !field.attributes.contains(&FieldAttributes::Excluded))
         .collect::<Vec<FieldDescription>>();
 
     let required_fields: Vec<&FieldDescription> = field_descriptions
@@ -162,6 +177,8 @@ pub fn derive(input: TokenStream) -> TokenStream {
         .iter()
         .filter(|desc| !desc.attributes.contains(&FieldAttributes::Required))
         .collect();
+
+    optional_fields.iter().for_each(validate_optional_field);
 
     let optional_assignments: TokenStream2 = optional_fields
         .iter()
@@ -194,31 +211,22 @@ pub fn derive(input: TokenStream) -> TokenStream {
     trait_impl.into()
 }
 
-fn map_field_to_description(field: &&Field) -> FieldDescription {
+fn map_field_to_description(field: &Field) -> FieldDescription {
     let attributes = field
         .attrs
         .iter()
         .flat_map(parse_query_attributes)
         .collect::<HashSet<FieldAttributes>>();
 
-    if !attributes.contains(&FieldAttributes::Required) {
-        if let Type::Path(type_path) = &field.ty {
-            if !(type_path.qself.is_none() && path_is_option(&type_path.path)) {
-                panic!("Non-optional types must be marked with #[query(required)] attribute")
-            }
-        }
-    }
-
     let mut desc = FieldDescription {
+        field,
         field_name: field.ident.as_ref().unwrap().to_string(),
         ident: field.ident.clone().unwrap(),
         attributes,
     };
 
     let name = name_from_field_description(&desc);
-
     desc.field_name = name;
-
     desc
 }
 
@@ -242,6 +250,10 @@ fn parse_query_attributes(attr: &Attribute) -> Vec<FieldAttributes> {
                 attrs.push(FieldAttributes::Required);
             }
 
+            if m.path.is_ident("exclude") {
+                attrs.push(FieldAttributes::Excluded);
+            }
+
             if m.path.is_ident("rename") {
                 let value = m.value().unwrap();
                 let rename: LitStr = value.parse().unwrap();
@@ -255,6 +267,14 @@ fn parse_query_attributes(attr: &Attribute) -> Vec<FieldAttributes> {
     }
 
     attrs
+}
+
+fn validate_optional_field(field_desc: &&FieldDescription) {
+    if let Type::Path(type_path) = &field_desc.field.ty {
+        if !(type_path.qself.is_none() && path_is_option(&type_path.path)) {
+            panic!("Non-optional types must be marked with #[query(required)] attribute")
+        }
+    }
 }
 
 fn path_is_option(path: &Path) -> bool {

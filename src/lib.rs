@@ -4,9 +4,10 @@ pub use query_params_macro::QueryParams;
 pub use urlencoding;
 
 /// [`ToQueryParams`] contains a single `to_query_params` method that produces a
-/// `Vec<(String, String)>` that represents the struct as query parameters for an API.
+/// `Vec<(String, String)>` representing the struct as url-encoded query parameters.
 ///
 pub trait ToQueryParams {
+    /// Creates a `Vec<(String, String)>` as the url-encoded (key, value) pairs for query parameters.
     fn to_query_params(&self) -> Vec<(String, String)>;
 }
 
@@ -20,6 +21,18 @@ mod tests {
         a: i32,
         #[query(required)]
         b: i32,
+    }
+
+    #[derive(QueryParams, Debug, PartialEq)]
+    struct TestExcludeItem {
+        #[query(required)]
+        a: i32,
+        #[query(exclude)]
+        b: i32,
+        #[query(exclude)]
+        c: Option<i32>,
+        #[query(required)]
+        d: i32,
     }
 
     #[derive(QueryParams, Debug, PartialEq)]
@@ -83,6 +96,23 @@ mod tests {
         let expected = vec![
             ("a".to_string(), "0".to_string()),
             ("b".to_string(), "1".to_string()),
+        ];
+
+        assert_eq!(test_item.to_query_params(), expected);
+    }
+
+    #[test]
+    fn test_exclude_attribute() {
+        let test_item = TestExcludeItem {
+            a: 0,
+            b: 1,
+            c: Some(2),
+            d: 3,
+        };
+
+        let expected = vec![
+            ("a".to_string(), "0".to_string()),
+            ("d".to_string(), "3".to_string()),
         ];
 
         assert_eq!(test_item.to_query_params(), expected);
