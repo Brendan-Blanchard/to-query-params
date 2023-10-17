@@ -1,6 +1,6 @@
 # to-query-params
 A procedural macro and trait for converting arbitrary structs into `Vec<(String, String)>` for use as query parameters, 
-simplifying the conversion of arbitrary structs into query parameters, largely for use with the [Hyper](https://crates.io/crates/hyper) HTTP framework.
+originally intended for ease of use with the [Hyper](https://crates.io/crates/hyper) HTTP framework.
 
 ![badge](https://github.com/Brendan-Blanchard/to-query-params/actions/workflows/main.yml/badge.svg) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -12,7 +12,7 @@ use query_params::{ToQueryParams, QueryParams};
  // Eq and PartialEq are just for assertions
  #[derive(QueryParams, Debug, PartialEq, Eq)]
  struct ProductRequest {
-     #[query(required)] // field that aren't Option<T> must be marked as required
+     #[query(required)] // fields that aren't Option<T> must be marked as required
      id: i32,
      #[query(required, rename = "type")]
      product_type: String,
