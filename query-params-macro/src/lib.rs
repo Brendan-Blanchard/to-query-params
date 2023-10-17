@@ -29,8 +29,8 @@ struct FieldDescription<'f> {
 /// any struct with field values supporting `.to_string()`.
 ///
 /// Optional values are only included if present,
-/// and fields marked `#[query(required)]` must be non-optional. Renaming of fields is also available,
-/// using `#[query(rename = "other_name")]` on the field.
+/// and fields marked `#[query(required)]` must be non-optional. Renaming and excluding of fields is
+/// also available, using `#[query(rename = "new_name")]` or `#[query(exclude)]` on the field.
 ///
 ///
 ///
@@ -76,15 +76,14 @@ struct FieldDescription<'f> {
 /// At this time, the available attributes are:
 /// - required -- marks a field as required, meaning it can be `T` instead of `Option<T>` on the struct
 /// and will always appear in the resulting `Vec`
-/// - rename -- marks a field to be renamed when it's output in the resulting Vec.
+/// - rename -- marks a field to be renamed when it is output in the resulting Vec.
 /// E.g. `#[query(rename = "newName")]`
-/// - exclude -- marks a field to never be included in output params, regardless of value
+/// - exclude -- marks a field to never be included in the output query params
 ///
 /// # Example: Renaming and Excluding
 /// In some cases, names of query parameters are not valid identifiers, or don't adhere to Rust's
-/// default style of "snake_case". Parameters named `type` is a common invalid identifier in many APIs.
-/// [`QueryParams`] can rename individual fields when creating the query parameters Vec if the
-/// attribute with the rename attribute: `#[query(rename = "new_name")]`.
+/// default style of "snake_case". [`QueryParams`] can rename individual fields when creating the
+/// query parameters Vec if the attribute with the rename attribute: `#[query(rename = "new_name")]`.
 ///
 /// In the below example, an API expects a type of product and a max price, given as
 /// `type=something&maxPrice=123`, which would be and invalid identifier and a non-Rust style
