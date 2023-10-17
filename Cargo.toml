@@ -1,3 +1,6 @@
+[workspace]
+members = [".", "query-params-macro"]
+
 [package]
 name = "to-query-params"
 version = "0.0.2"
@@ -9,9 +12,6 @@ repository = "https://github.com/Brendan-Blanchard/to-query-params"
 keywords = ["hyper", "query", "params", "web", "http"]
 categories = ["patterns", "web-programming", "network-programming"]
 exclude = [".idea", ".gitignore", ".github"]
-
-[workspace]
-members = [".", "query-params-macro"]
 
 [dependencies]
 query-params-macro = { version = "0.0.2", path = "query-params-macro" }
