@@ -166,8 +166,8 @@ pub fn derive(input: TokenStream) -> TokenStream {
         let mut query_params: ::std::vec::Vec<(String, String)> =
         vec![#(
             (
-                ::urlencoding::encode(#req_names).into_owned(),
-                ::urlencoding::encode(&self.#req_idents.to_string()).into_owned()
+                ::to_query_params::urlencoding::encode(#req_names).into_owned(),
+                ::to_query_params::urlencoding::encode(&self.#req_idents.to_string()).into_owned()
             )
         ),*];
     };
@@ -188,8 +188,8 @@ pub fn derive(input: TokenStream) -> TokenStream {
                 if let Some(val) = &self.#ident {
                     query_params.push(
                         (
-                            ::urlencoding::encode(#name).into_owned(),
-                            ::urlencoding::encode(&val.to_string()).into_owned()
+                            ::to_query_params::urlencoding::encode(#name).into_owned(),
+                            ::to_query_params::urlencoding::encode(&val.to_string()).into_owned()
                         )
                     );
                 }

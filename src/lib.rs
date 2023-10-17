@@ -1,7 +1,12 @@
 //! `to-query-params` exports the [`QueryParams`] derive macro for public consumption, and the
 //! [`ToQueryParams`] trait that it derives.
+#[doc(inline)]
 pub use query_params_macro::QueryParams;
+
+#[doc(hidden)]
 pub use urlencoding;
+
+extern crate self as to_query_params;
 
 /// [`ToQueryParams`] contains a single `to_query_params` method that produces a
 /// `Vec<(String, String)>` representing the struct as url-encoded query parameters.
