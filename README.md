@@ -1,10 +1,10 @@
 # to-query-params
-A procedural macro and trait for converting arbitrary structs into `Vec<(&'static str, String)>` for use as query parameters.
+A procedural macro and trait for converting arbitrary structs into `Vec<(String, String)>` for use as query parameters.
 
 `QueryParams` is meant to simplify the conversion of arbitrary structs into query parameters, largely for use with the 
 [Hyper](https://crates.io/crates/hyper) HTTP framework. 
 
-The macro does no URL encoding of strings at this time, and is meant to do the work of creating the `Vec<(&'static str, String)>`,
+The macro does no URL encoding of strings at this time, and is meant to do the work of creating the `Vec<(String, String)>`,
 which can be tedious for large or repetitive structs. A method may be added to the `ToQueryParams` trait to make url encoding
 available in the future.
 
@@ -20,6 +20,8 @@ use query_params::{ToQueryParams, QueryParams};
  struct ProductRequest {
      #[query(required)] // mark required fields as not Option<T>
      id: i32,
+     #[query(rename = "type")]
+     product_type: String,
      min_price: Option<i32>,
      max_price: Option<i32>,
  }
@@ -27,11 +29,12 @@ use query_params::{ToQueryParams, QueryParams};
  pub fn main() {
      let request = ProductRequest {
          id: 999,
+         product_type: "accessory".to_string(),
          min_price: None,
          max_price: Some(100),
      };
 
-     let expected = vec![("id", "999".into()), ("max_price", "100".into())];
+     let expected = vec![("id", "999".into()), ("type", "accessory".into()), ("max_price", "100".into())];
      
      let query_params = request.to_query_params();
 

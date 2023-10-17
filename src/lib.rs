@@ -1,7 +1,13 @@
+//! `to-query-params` exports the [`QueryParams`] derive macro for public consumption, and the
+//! [`ToQueryParams`] trait that it derives.
 pub use query_params_macro::QueryParams;
+pub use urlencoding;
 
+/// [`ToQueryParams`] contains a single `to_query_params` method that produces a
+/// `Vec<(String, String)>` that represents the struct as query parameters for an API.
+///
 pub trait ToQueryParams {
-    fn to_query_params(&self) -> Vec<(&'static str, String)>;
+    fn to_query_params(&self) -> Vec<(String, String)>;
 }
 
 #[cfg(test)]
@@ -14,6 +20,14 @@ mod tests {
         a: i32,
         #[query(required)]
         b: i32,
+    }
+
+    #[derive(QueryParams, Debug, PartialEq)]
+    struct TestStringItem {
+        #[query(required)]
+        a: String,
+        #[query(required, rename = "please encode")]
+        b: String,
     }
 
     #[derive(QueryParams, Debug, PartialEq)]
@@ -57,10 +71,34 @@ mod tests {
     }
 
     #[test]
+    fn test_developer_experience() {
+        let t = trybuild::TestCases::new();
+        t.compile_fail("tests/ui/*.rs");
+    }
+
+    #[test]
     fn test_query_params_required_case() {
         let test_item = TestItem { a: 0, b: 1 };
 
-        let expected = vec![("a", "0".to_string()), ("b", "1".to_string())];
+        let expected = vec![
+            ("a".to_string(), "0".to_string()),
+            ("b".to_string(), "1".to_string()),
+        ];
+
+        assert_eq!(test_item.to_query_params(), expected);
+    }
+
+    #[test]
+    fn test_query_params_encoding() {
+        let test_item = TestStringItem {
+            a: "please encode me".into(),
+            b: "this works?".into(),
+        };
+
+        let expected = vec![
+            ("a".to_string(), "please%20encode%20me".to_string()),
+            ("please%20encode".to_string(), "this%20works%3F".to_string()),
+        ];
 
         assert_eq!(test_item.to_query_params(), expected);
     }
@@ -69,7 +107,10 @@ mod tests {
     fn test_required_rename_case() {
         let test_item = TestItemRequiredRename { a: 0, b: 1 };
 
-        let expected = vec![("alpha", "0".to_string()), ("b", "1".to_string())];
+        let expected = vec![
+            ("alpha".to_string(), "0".to_string()),
+            ("b".to_string(), "1".to_string()),
+        ];
 
         assert_eq!(test_item.to_query_params(), expected);
     }
@@ -81,7 +122,7 @@ mod tests {
             b: None,
         };
 
-        let expected = vec![("a", "a".to_string())];
+        let expected = vec![("a".to_string(), "a".to_string())];
 
         assert_eq!(test_item.to_query_params(), expected);
     }
@@ -93,7 +134,10 @@ mod tests {
             b: Some(true),
         };
 
-        let expected = vec![("alpha", "a".to_string()), ("beta", "true".to_string())];
+        let expected = vec![
+            ("alpha".to_string(), "a".to_string()),
+            ("beta".to_string(), "true".to_string()),
+        ];
 
         assert_eq!(test_item.to_query_params(), expected);
     }
@@ -106,7 +150,10 @@ mod tests {
             c: 42,
         };
 
-        let expected = vec![("a", "a".to_string()), ("c", "42".to_string())];
+        let expected = vec![
+            ("a".to_string(), "a".to_string()),
+            ("c".to_string(), "42".to_string()),
+        ];
 
         let mut actual = test_item.to_query_params();
 
@@ -124,7 +171,10 @@ mod tests {
             c: 42,
         };
 
-        let expected = vec![("alpha", "a".to_string()), ("gamma", "42".to_string())];
+        let expected = vec![
+            ("alpha".to_string(), "a".to_string()),
+            ("gamma".to_string(), "42".to_string()),
+        ];
 
         let mut actual = test_item.to_query_params();
 
