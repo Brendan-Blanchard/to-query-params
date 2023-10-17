@@ -10,7 +10,7 @@ description = "A procedural macro and trait for easy use of arbitrary structs as
 license = "MIT"
 repository = "https://github.com/Brendan-Blanchard/to-query-params"
 keywords = ["hyper", "query", "params", "web", "http"]
-categories = ["patterns", "web-programming", "network-programming"]
+categories = ["rust-patterns", "web-programming", "network-programming"]
 exclude = [".idea", ".gitignore", ".github"]
 
 [dependencies]
