@@ -1,6 +1,6 @@
 [package]
 name = "query-params-macro"
-version = "0.0.3"
+version = "0.0.4"
 edition = "2021"
 authors = ["Brendan Blanchard"]
 description = "A procedural macro for easy use of arbitrary structs as query parameters in Hyper"

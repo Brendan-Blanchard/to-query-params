@@ -8,12 +8,16 @@ pub use urlencoding;
 
 extern crate self as to_query_params;
 
-/// [`ToQueryParams`] contains a single `to_query_params` method that produces a
-/// `Vec<(String, String)>` representing the struct as url-encoded query parameters.
+/// [`ToQueryParams`] contains two methods, `to_query_params` and `to_encoded_params`, which each
+/// produce a `Vec<(String, String)>` representing the struct as query parameters, either un-encoded
+/// or url-encoded respectively.
 ///
 pub trait ToQueryParams {
-    /// Creates a `Vec<(String, String)>` as the url-encoded (key, value) pairs for query parameters.
+    /// Creates a `Vec<(String, String)>` as the un-encoded (key, value) pairs for query parameters.
     fn to_query_params(&self) -> Vec<(String, String)>;
+
+    /// Creates a `Vec<(String, String)>` as the url-encoded (key, value) pairs for query parameters.
+    fn to_encoded_params(&self) -> Vec<(String, String)>;
 }
 
 #[cfg(test)]
@@ -135,7 +139,7 @@ mod tests {
             ("please%20encode".to_string(), "this%20works%3F".to_string()),
         ];
 
-        assert_eq!(test_item.to_query_params(), expected);
+        assert_eq!(test_item.to_encoded_params(), expected);
     }
 
     #[test]

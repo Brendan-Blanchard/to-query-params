@@ -2,6 +2,9 @@
 A procedural macro and trait for converting arbitrary structs into `Vec<(String, String)>` for use as query parameters, 
 originally intended for ease of use with the [Hyper](https://crates.io/crates/hyper) HTTP framework.
 
+Query parameters can be url-encoded with the [urlencoding](https://crates.io/crates/urlencoding) crate by calling the
+`to_encoded_params` method, while the default `to_query_params` method does not url-encode parameters.
+
 ![badge](https://github.com/Brendan-Blanchard/to-query-params/actions/workflows/main.yml/badge.svg) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Usage:

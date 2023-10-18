@@ -32,8 +32,6 @@ struct FieldDescription<'f> {
 /// and fields marked `#[query(required)]` must be non-optional. Renaming and excluding of fields is
 /// also available, using `#[query(rename = "new_name")]` or `#[query(exclude)]` on the field.
 ///
-///
-///
 /// # Example: Query Params
 /// QueryParams supports both required and optional fields, which won't be included in the output
 /// if their value is None.
@@ -163,6 +161,14 @@ pub fn derive(input: TokenStream) -> TokenStream {
 
     let vec_definition = quote! {
         let mut query_params: ::std::vec::Vec<(String, String)> =
+        vec![#((
+            #req_names.to_string(),
+            self.#req_idents.to_string()
+        )),*];
+    };
+
+    let vec_encoded_definition = quote! {
+        let mut query_params: ::std::vec::Vec<(String, String)> =
         vec![#(
             (
                 ::to_query_params::urlencoding::encode(#req_names).into_owned(),
@@ -185,6 +191,22 @@ pub fn derive(input: TokenStream) -> TokenStream {
             let name = &field.field_name;
             quote! {
                 if let Some(val) = &self.#ident {
+                    query_params.push((
+                        #name.to_string(),
+                        val.to_string()
+                    ));
+                }
+            }
+        })
+        .collect();
+
+    let optional_encoded_assignments: TokenStream2 = optional_fields
+        .iter()
+        .map(|field| {
+            let ident = &field.ident;
+            let name = &field.field_name;
+            quote! {
+                if let Some(val) = &self.#ident {
                     query_params.push(
                         (
                             ::to_query_params::urlencoding::encode(#name).into_owned(),
@@ -197,10 +219,17 @@ pub fn derive(input: TokenStream) -> TokenStream {
         .collect();
 
     let trait_impl = quote! {
+        #[allow(dead_code)]
         impl ToQueryParams for #ident {
             fn to_query_params(&self) -> ::std::vec::Vec<(String, String)> {
                 #vec_definition
                 #optional_assignments
+                query_params
+            }
+
+            fn to_encoded_params(&self) -> ::std::vec::Vec<(String, String)> {
+                #vec_encoded_definition
+                #optional_encoded_assignments
                 query_params
             }
         }
