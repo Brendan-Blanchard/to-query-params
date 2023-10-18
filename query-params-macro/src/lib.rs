@@ -92,7 +92,6 @@ struct FieldDescription<'f> {
 ///
 /// ```
 /// # use query_params_macro::QueryParams;
-/// # use urlencoding;
 /// # // trait defined here again since it can't be provided by macro crate
 /// # pub trait ToQueryParams {
 /// #    fn to_query_params(&self) -> Vec<(String, String)>;
