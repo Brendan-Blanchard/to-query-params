@@ -9,7 +9,7 @@ use quote::quote;
 use std::collections::HashSet;
 use std::vec::Vec;
 use syn::__private::TokenStream2;
-use syn::{parse_macro_input, Attribute, DeriveInput, Field, Fields, Ident, LitStr, Path, Type};
+use syn::{Attribute, DeriveInput, Field, Fields, Ident, LitStr, Path, Type, parse_macro_input};
 
 #[derive(Debug, Eq, PartialEq, Hash)]
 enum FieldAttributes {
@@ -72,10 +72,8 @@ struct FieldDescription<'f> {
 /// ## Attributes
 /// QueryParams supports attributes under `#[query(...)]` on individual fields to carry metadata.
 /// At this time, the available attributes are:
-/// - required -- marks a field as required, meaning it can be `T` instead of `Option<T>` on the struct
-/// and will always appear in the resulting `Vec`
-/// - rename -- marks a field to be renamed when it is output in the resulting Vec.
-/// E.g. `#[query(rename = "newName")]`
+/// - required -- marks a field as required, meaning it can be `T` instead of `Option<T>` on the struct and will always appear in the resulting `Vec`
+/// - rename -- marks a field to be renamed when it is output in the resulting Vec, e.g. `#[query(rename = "newName")]`
 /// - exclude -- marks a field to never be included in the output query params
 ///
 /// # Example: Renaming and Excluding
@@ -263,10 +261,10 @@ fn parse_query_attributes(attr: &Attribute) -> Vec<FieldAttributes> {
 }
 
 fn validate_optional_field(field_desc: &&FieldDescription) {
-    if let Type::Path(type_path) = &field_desc.field.ty {
-        if !(type_path.qself.is_none() && path_is_option(&type_path.path)) {
-            panic!("Non-optional types must be marked with #[query(required)] attribute")
-        }
+    if let Type::Path(type_path) = &field_desc.field.ty
+        && !(type_path.qself.is_none() && path_is_option(&type_path.path))
+    {
+        panic!("Non-optional types must be marked with #[query(required)] attribute")
     }
 }
 
