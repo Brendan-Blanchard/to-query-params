@@ -2,7 +2,7 @@ use to_query_params::QueryParams;
 
 #[derive(QueryParams)]
 struct Data {
-    #[query(###)]
+    #[query(!!!)]
     number: f64,
 }
 

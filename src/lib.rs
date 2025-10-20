@@ -17,7 +17,17 @@ pub trait ToQueryParams {
     fn to_query_params(&self) -> Vec<(String, String)>;
 
     /// Creates a `Vec<(String, String)>` as the url-encoded (key, value) pairs for query parameters.
-    fn to_encoded_params(&self) -> Vec<(String, String)>;
+    fn to_encoded_params(&self) -> Vec<(String, String)> {
+        self.to_query_params()
+            .iter()
+            .map(|(k, v)| {
+                (
+                    urlencoding::encode(k).to_string(),
+                    urlencoding::encode(v).to_string(),
+                )
+            })
+            .collect()
+    }
 }
 
 #[cfg(test)]

@@ -1,5 +1,5 @@
 //! QueryParams is a procedural macro for deriving a [`Hyper`]-centric representation
-//! of that struct as query parameters that can be easily appended to query parameters in the Hyper
+//! of a struct as query parameters that can be easily appended as query parameters in the Hyper
 //! framework. *This crate is only meant to be tested and re-exported by the `QueryParams` crate,
 //! and is not meant for direct consumption.*
 //!
@@ -84,7 +84,7 @@ struct FieldDescription<'f> {
 /// query parameters Vec if the attribute with the rename attribute: `#[query(rename = "new_name")]`.
 ///
 /// In the below example, an API expects a type of product and a max price, given as
-/// `type=something&maxPrice=123`, which would be and invalid identifier and a non-Rust style
+/// `type=something&maxPrice=123`, which would be an invalid identifier and a non-Rust style
 /// field name respectively. A field containing local data that won't be included in the query
 /// is also tagged as `#[query(exclude)]` to exclude it.
 ///
@@ -167,16 +167,6 @@ pub fn derive(input: TokenStream) -> TokenStream {
         )),*];
     };
 
-    let vec_encoded_definition = quote! {
-        let mut query_params: ::std::vec::Vec<(String, String)> =
-        vec![#(
-            (
-                ::to_query_params::urlencoding::encode(#req_names).into_owned(),
-                ::to_query_params::urlencoding::encode(&self.#req_idents.to_string()).into_owned()
-            )
-        ),*];
-    };
-
     let optional_fields: Vec<&FieldDescription> = field_descriptions
         .iter()
         .filter(|desc| !desc.attributes.contains(&FieldAttributes::Required))
@@ -200,36 +190,12 @@ pub fn derive(input: TokenStream) -> TokenStream {
         })
         .collect();
 
-    let optional_encoded_assignments: TokenStream2 = optional_fields
-        .iter()
-        .map(|field| {
-            let ident = &field.ident;
-            let name = &field.field_name;
-            quote! {
-                if let Some(val) = &self.#ident {
-                    query_params.push(
-                        (
-                            ::to_query_params::urlencoding::encode(#name).into_owned(),
-                            ::to_query_params::urlencoding::encode(&val.to_string()).into_owned()
-                        )
-                    );
-                }
-            }
-        })
-        .collect();
-
     let trait_impl = quote! {
         #[allow(dead_code)]
-        impl ToQueryParams for #ident {
+        impl to_query_params::ToQueryParams for #ident {
             fn to_query_params(&self) -> ::std::vec::Vec<(String, String)> {
                 #vec_definition
                 #optional_assignments
-                query_params
-            }
-
-            fn to_encoded_params(&self) -> ::std::vec::Vec<(String, String)> {
-                #vec_encoded_definition
-                #optional_encoded_assignments
                 query_params
             }
         }
@@ -238,7 +204,7 @@ pub fn derive(input: TokenStream) -> TokenStream {
     trait_impl.into()
 }
 
-fn map_field_to_description(field: &Field) -> FieldDescription {
+fn map_field_to_description<'f>(field: &'f Field) -> FieldDescription<'f> {
     let attributes = field
         .attrs
         .iter()
